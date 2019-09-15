@@ -1,3 +1,9 @@
+from torch import Tensor
+from torch.nn.utils.rnn import pad_sequence
+
+import config
+
+
 def load_data(x_file, y_file, languages, clip_length=100, clip_sents=False, padding=False):
     '''
             INPUT: This function takes as input the files containing the sentences and the labels, as well as the
@@ -22,25 +28,42 @@ def load_data(x_file, y_file, languages, clip_length=100, clip_sents=False, padd
             # this will add 100 sentences for each sent
             if padding is True:
                 for index in range(len(sent)):
-                    X.append([ord(x) for x in sent[:index + 1]])
+                    X.append([x for x in sent[:index + 1]])
                     y.append(lang_label)
             # this will add just the sent
             else:
-                X.append([ord(x) for x in sent])
+                X.append([x for x in sent])
                 y.append(lang_label)
 
     return X, y
 
 
-x_file = 'wili-2018/x_train.txt'
-y_file = 'wili-2018/y_train.txt'
+def pad_sents(sents):
+    '''
+            We first convert strings to vectors. To do that, I am using ord() here - can replace it by something else 
+            later.
+            Then we convert the vectors to tensors.
+            Then we pad the sequences
+    '''
+    vectors = []
+    for sent in sents:
+        vec = [ord(ch) for ch in sent]
+        vectors.append(vec)
+
+    vectors_tensors = [Tensor(vec) for vec in vectors]
+
+    vectors_tensors = pad_sequence(vectors_tensors)
+    return vectors_tensors
+
+
 languages = ['eng', 'urd', 'fars']
 
-X, y = load_data(x_file, y_file, languages, clip_length=100,
+X, y = load_data(config.x_file, config.y_file, languages, clip_length=100,
                  clip_sents=True, padding=True)
 for index in range(0, 5):
     print(X[index])
     print(y[index])
     print("-" * 60)
 
-# TODO: Convert sentences to vectors, vectors to tensors, get padded versions of all sentences
+sequences = pad_sents(X)
+print(sequences)
