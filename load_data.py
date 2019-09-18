@@ -45,15 +45,23 @@ def pad_sents(sents):
             Then we convert the vectors to tensors.
             Then we pad the sequences
     '''
-    vectors = []
-    for sent in sents:
-        vec = [ord(ch) for ch in sent]
-        vectors.append(vec)
+    # using ord() to convert words to integers/numeric representation and creating numeric representations through that
+    # vectors = []
+    # for sent in sents:
+    #     vec = [ord(ch) for ch in sent]
+    #     vectors.append(vec)
 
-    vectors_tensors = [Tensor(vec) for vec in vectors]
+    # using vocabulary to get word-to-integer mapping and creating numeric representations through that
+    # sent_char_lists = [list(sent) for sent in sents]
+    unique_chars = list(set(sum(sents, [])))
+    char_to_int_mapping = {char: i for i, char in enumerate(unique_chars)}
+    sent_vectors = [[char_to_int_mapping[char]
+                     for char in list(sent)] for sent in sents]
 
-    vectors_tensors = pad_sequence(vectors_tensors)
-    return vectors_tensors
+    sent_vectors_tensors = [Tensor(vec) for vec in sent_vectors]
+
+    sent_vectors_tensors = pad_sequence(sent_vectors_tensors)
+    return sent_vectors_tensors
 
 
 languages = ['eng', 'urd', 'fars']
@@ -65,5 +73,5 @@ for index in range(0, 5):
     print(y[index])
     print("-" * 60)
 
-sequences = pad_sents(X)
+sequences = pad_sents(X[:5])
 print(sequences)
