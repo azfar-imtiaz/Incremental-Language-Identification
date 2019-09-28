@@ -35,7 +35,6 @@ def get_numeric_representations_sents(sents):
     # using vocabulary to get word-to-integer mapping and creating numeric representations through that
     vocabulary = list(set(sum(sents, [])))
     char_to_int_mapping = {char: i + 1 for i, char in enumerate(vocabulary)}
-    print(char_to_int_mapping)
     sent_vectors = [[char_to_int_mapping[char]
                      for char in list(sent)] for sent in sents]
 

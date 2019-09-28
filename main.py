@@ -2,6 +2,7 @@
 import torch.nn as nn
 from torch.optim import Adam
 from torch.nn.utils.rnn import pad_sequence
+from sklearn.model_selection import train_test_split
 # import random
 
 import config
@@ -54,16 +55,16 @@ if __name__ == '__main__':
     }
 
     print("Loading data...")
-    X, y = load_data(config.x_file, config.y_file, languages,
+    X, Y = load_data(config.x_file, config.y_file, languages,
                      lang_label_to_int_mapping, clip_length=100,
                      clip_sents=True, padding=True)
     X = X[:2500]
-    y = y[:2500]
+    Y = Y[:2500]
 
     print("Converting characters to numbers, generating vocabulary...")
     numeric_sequences, vocabulary = get_numeric_representations_sents(X)
 
-    print(vocabulary)
+    print("Vocabulary: \n{}".format(vocabulary))
 
     print("Padding sequences...")
     padded_sequences = pad_sequence(
@@ -73,13 +74,21 @@ if __name__ == '__main__':
     # one_hot_vec_sequences = create_one_hot_vectors(
     #     padded_sequences, vocabulary)
 
+    print("Creating train-test split...")
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        padded_sequences, Y, test_size=0.2)
+
     print("Creating training data generator...")
     training_generator = initialize_data_generator(
-        padded_sequences, y, config.BATCH_SIZE)
+        X_train, Y_train, config.BATCH_SIZE)
 
     print("Initializing the network...")
-    model, criterion, optimizer = initialize_network(len(vocabulary) + 1, len(
-        padded_sequences[0]), 200, 300, len(languages), 2, 0.2, config.LEARNING_RATE)
+    vocab_size = len(vocabulary) + 1
+    output_size = len(languages)
+    seq_len = len(padded_sequences[0])
+    model, criterion, optimizer = initialize_network(
+        vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
+        output_size, config.NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE)
 
     print("Training the model...")
     model = train_model(training_generator, model, criterion, optimizer)
