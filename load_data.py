@@ -1,7 +1,7 @@
 from torch import Tensor, LongTensor, zeros
 
 
-def load_data(x_file, y_file, languages, clip_length=100, clip_sents=False, padding=False):
+def load_data(x_file, y_file, languages, lang_label_to_int_mapping, clip_length=100, clip_sents=False, padding=False):
     '''
             INPUT: This function takes as input the files containing the sentences and the labels, as well as the
             list of languages to be considered. It goes through the content of both files simultaneously, and for
@@ -12,10 +12,6 @@ def load_data(x_file, y_file, languages, clip_length=100, clip_sents=False, padd
     '''
     X = []
     y = []
-
-    lang_label_to_int_mapping = {
-        lang_label: i for i, lang_label in enumerate(languages)
-    }
 
     x_data = open(x_file, 'r').read().split('\n')
     y_data = open(y_file, 'r').read().split('\n')
@@ -76,7 +72,7 @@ def create_one_hot_vectors(sequences, vocabulary):
     one_hot_vectors = []
     for seq in sequences:
         # one_hot_vec = zeros(len(vocabulary))
-        one_hot_vec = [-1.0] * len(vocabulary)
+        one_hot_vec = [0.0] * len(vocabulary)
         for char_int in seq:
             char_int = int(char_int.item())
             if char_int == -1:
