@@ -19,8 +19,8 @@ class GRUNet(nn.Module):
         output = self.emb(sequence)
         hidden_layer = self.init_hidden(len(sequence[0]))
         output, _ = self.gru(output, hidden_layer)
-        output = output.contiguous().view(
-            1, self.hidden_size * len(sequence[0]))
+        output = output.contiguous().view(-1, self.hidden_size *
+                                          len(sequence[0]))
         output = self.fc(output)
         # don't need the softmax here as CrossEntropy loss already does softmax at its end
         # output = self.softmax(output)

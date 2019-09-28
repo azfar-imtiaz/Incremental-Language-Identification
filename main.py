@@ -1,11 +1,13 @@
-import torch
+# import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torch.utils import data
 from torch.nn.utils.rnn import pad_sequence
-import random
+# import random
 
 import config
 from GRUNet import GRUNet
+from Dataset import Dataset
 from load_data import load_data, get_numeric_representations_sents
 
 
@@ -21,9 +23,10 @@ if __name__ == '__main__':
 
     print("Loading data...")
     X, y = load_data(config.x_file, config.y_file, languages,
-                     lang_label_to_int_mapping, clip_length=100, clip_sents=True, padding=True)
-    X = X[:500]
-    y = y[:500]
+                     lang_label_to_int_mapping, clip_length=100,
+                     clip_sents=True, padding=True)
+    X = X[:2500]
+    y = y[:2500]
 
     print("Converting characters to numbers, generating vocabulary...")
     numeric_sequences, vocabulary = get_numeric_representations_sents(X)
@@ -45,6 +48,15 @@ if __name__ == '__main__':
     #     print(one_hot_vec_sequences[index])
     #     print(one_hot_vec_sequences[index].eq(1).sum().item())
 
+    print("Creating training data generator...")
+    # create training_generator here
+    params = {
+        'batch_size': config.BATCH_SIZE,
+        'shuffle': True
+    }
+    training_set = Dataset(padded_sequences, y)
+    training_generator = data.DataLoader(training_set, **params)
+
     # initializing the network
     print("Initializing the network...")
     model = GRUNet(vocab_size=len(vocabulary) + 1, seq_len=len(
@@ -60,19 +72,22 @@ if __name__ == '__main__':
     model.train()
     for epoch in range(config.NUM_EPOCHS):
         print("Epoch: %d" % (epoch + 1))
+        '''
+        # This is for batch size 1 - need to manually shuffle the data
         zipped_data = list(zip(padded_sequences, y))
         random.shuffle(zipped_data)
         padded_sequences, y = zip(*zipped_data)
+        '''
         epoch_loss = 0.0
-        # for index, sequence in enumerate(one_hot_vec_sequences):
-        for index, (input_seq, output_seq) in enumerate(zip(padded_sequences, y)):
+        for local_batch, local_labels in training_generator:
+            # for index, (input_seq, output_seq) in enumerate(zip(padded_sequences, y)):  --> This is for batch size 1
             optimizer.zero_grad()
-            output = model(torch.stack([input_seq]).long())
-            loss = criterion(output, torch.LongTensor([output_seq]))
+            # output = model(torch.stack([input_seq]).long())  --> This is for batch size 1
+            output = model(local_batch.long())
+            # loss = criterion(output, torch.LongTensor([output_seq]))  --> This is for batch size 1
+            loss = criterion(output, local_labels.long())
             loss.backward()
             optimizer.step()
 
-            # if index % 500 == 0 and index > 0:
-            #     print(loss.item())
             epoch_loss += loss.item()
-        print("Loss at epoch {}: {}".format(epoch + 1, epoch_loss))
+        print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
