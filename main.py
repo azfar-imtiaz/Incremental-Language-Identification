@@ -1,8 +1,9 @@
-# import torch
+import torch
 import torch.nn as nn
 from torch.optim import Adam
 from torch.nn.utils.rnn import pad_sequence
 from sklearn.model_selection import train_test_split
+import numpy as np
 # import random
 
 import config
@@ -48,6 +49,19 @@ def train_model(training_generator, model, criterion, optimizer):
     return model
 
 
+def test_model(testing_generator, model):
+    total_predictions = 0
+    correct_predictions = 0
+    for local_batch, local_labels in testing_generator:
+        outputs = model(local_batch.long())
+        _, predicted = torch.max(outputs.data, dim=1)
+        total_predictions += local_labels.size(0)
+        correct_predictions += (predicted == local_labels).sum().item()
+
+    print("Accuracy of model: {}".format(
+        (correct_predictions / total_predictions) * 100))
+
+
 if __name__ == '__main__':
     languages = ['urd', 'fars', 'ara', 'srp', 'bos']
     lang_label_to_int_mapping = {
@@ -76,11 +90,13 @@ if __name__ == '__main__':
 
     print("Creating train-test split...")
     X_train, X_test, Y_train, Y_test = train_test_split(
-        padded_sequences, Y, test_size=0.2)
+        np.array(padded_sequences), Y, test_size=0.2)
 
-    print("Creating training data generator...")
+    print("Creating training and testing data generators...")
     training_generator = initialize_data_generator(
         X_train, Y_train, config.BATCH_SIZE)
+    testing_generator = initialize_data_generator(
+        X_test, Y_test, config.BATCH_SIZE)
 
     print("Initializing the network...")
     vocab_size = len(vocabulary) + 1
@@ -88,7 +104,10 @@ if __name__ == '__main__':
     seq_len = len(padded_sequences[0])
     model, criterion, optimizer = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
-        output_size, config.NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE)
+        output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE)
 
     print("Training the model...")
     model = train_model(training_generator, model, criterion, optimizer)
+
+    print("Testing the model...")
+    test_model(testing_generator, model)
