@@ -1,15 +1,10 @@
-from torch import Tensor, LongTensor, zeros
+from torch import Tensor
+from torch.utils import data
+
+from Dataset import Dataset
 
 
 def load_data(x_file, y_file, languages, lang_label_to_int_mapping, clip_length=100, clip_sents=False, padding=False):
-    '''
-            INPUT: This function takes as input the files containing the sentences and the labels, as well as the
-            list of languages to be considered. It goes through the content of both files simultaneously, and for
-            each sentence that belongs to one of the selected languages, it adds both the sentence and the language
-            label to the respective lists.
-            USAGE: This function can be called separately for both the training data and the testing data.
-            RETURNS: This function returns the selected sentences and their language labels in two separate lists.
-    '''
     X = []
     y = []
 
@@ -33,30 +28,11 @@ def load_data(x_file, y_file, languages, lang_label_to_int_mapping, clip_length=
                 X.append([x for x in sent])
                 y.append(lang_label_to_int_mapping[lang_label])
 
-    # convert y to one-hot encoded vectors
-    # y_one_hot = []
-    # for elem in y:
-    #     yoh = [0.0] * len(languages)
-    #     yoh[elem] = 1.0
-    #     y_one_hot.append(yoh)
-    # return X, y_one_hot
     return X, y
 
 
 def get_numeric_representations_sents(sents):
-    '''
-        We first convert strings to vectors. To do that, I am using ord() here - can replace
-        it by something else later.
-        Then we convert the vectors to tensors.
-    '''
-    # using ord() to convert words to integers/numeric representation and creating numeric representations through that
-    # vectors = []
-    # for sent in sents:
-    #     vec = [ord(ch) for ch in sent]
-    #     vectors.append(vec)
-
     # using vocabulary to get word-to-integer mapping and creating numeric representations through that
-    # sent_char_lists = [list(sent) for sent in sents]
     vocabulary = list(set(sum(sents, [])))
     char_to_int_mapping = {char: i + 1 for i, char in enumerate(vocabulary)}
     print(char_to_int_mapping)
@@ -84,10 +60,12 @@ def create_one_hot_vectors(sequences, vocabulary):
     return one_hot_vectors
 
 
-# def pad_sents(sents):
-#     '''
-#             Padding the sequences using pad_sequences
-#     '''
-
-#     sent_vectors_tensors = pad_sequence(sent_vectors_tensors)
-#     return sent_vectors_tensors
+def initialize_data_generator(padded_sequences, y, batch_size):
+    # create training_generator here
+    params = {
+        'batch_size': batch_size,
+        'shuffle': True
+    }
+    training_set = Dataset(padded_sequences, y)
+    training_generator = data.DataLoader(training_set, **params)
+    return training_generator

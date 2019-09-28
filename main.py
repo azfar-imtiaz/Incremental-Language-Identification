@@ -1,75 +1,28 @@
 # import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torch.utils import data
 from torch.nn.utils.rnn import pad_sequence
 # import random
 
 import config
 from GRUNet import GRUNet
-from Dataset import Dataset
-from load_data import load_data, get_numeric_representations_sents
+from load_data import load_data, get_numeric_representations_sents, initialize_data_generator
 
 
-if __name__ == '__main__':
-    languages = ['urd', 'fars', 'ara', 'srp', 'bos']
-    lang_label_to_int_mapping = {
-        lang_label: i for i, lang_label in enumerate(languages)
-    }
-
-    lang_int_to_label_mapping = {
-        i: lang_label for i, lang_label in enumerate(languages)
-    }
-
-    print("Loading data...")
-    X, y = load_data(config.x_file, config.y_file, languages,
-                     lang_label_to_int_mapping, clip_length=100,
-                     clip_sents=True, padding=True)
-    X = X[:2500]
-    y = y[:2500]
-
-    print("Converting characters to numbers, generating vocabulary...")
-    numeric_sequences, vocabulary = get_numeric_representations_sents(X)
-
-    print(vocabulary)
-    print(len(vocabulary))
-
-    print("Padding sequences...")
-    padded_sequences = pad_sequence(
-        numeric_sequences, batch_first=True, padding_value=0.0)
-    # for index in range(0, 5):
-    #     print(padded_sequences[index])
-    #     print(len(padded_sequences[index]))
-
-    # print("Generating one hot representations...")
-    # one_hot_vec_sequences = create_one_hot_vectors(
-    #     padded_sequences, vocabulary)
-    # for index in range(len(one_hot_vec_sequences)):
-    #     print(one_hot_vec_sequences[index])
-    #     print(one_hot_vec_sequences[index].eq(1).sum().item())
-
-    print("Creating training data generator...")
-    # create training_generator here
-    params = {
-        'batch_size': config.BATCH_SIZE,
-        'shuffle': True
-    }
-    training_set = Dataset(padded_sequences, y)
-    training_generator = data.DataLoader(training_set, **params)
-
+def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate):
     # initializing the network
-    print("Initializing the network...")
-    model = GRUNet(vocab_size=len(vocabulary) + 1, seq_len=len(
-        padded_sequences[0]), input_size=200, hidden_size=300,
-        output_size=len(languages), num_layers=2, dropout=0.2)
+    model = GRUNet(vocab_size=vocab_size, seq_len=seq_len, input_size=input_size,
+                   hidden_size=hidden_size, output_size=output_size, num_layers=num_layers,
+                   dropout=dropout)
 
     print(model)
     criterion = nn.CrossEntropyLoss()
-    learning_rate = config.LEARNING_RATE
     optimizer = Adam(model.parameters(), lr=learning_rate)
+    return model, criterion, optimizer
 
-    print("Training the model...")
-    model.train()
+
+def train_model(training_generator, model, criterion, optimizer):
+    # training the model
     for epoch in range(config.NUM_EPOCHS):
         print("Epoch: %d" % (epoch + 1))
         '''
@@ -91,3 +44,42 @@ if __name__ == '__main__':
 
             epoch_loss += loss.item()
         print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
+    return model
+
+
+if __name__ == '__main__':
+    languages = ['urd', 'fars', 'ara', 'srp', 'bos']
+    lang_label_to_int_mapping = {
+        lang_label: i for i, lang_label in enumerate(languages)
+    }
+
+    print("Loading data...")
+    X, y = load_data(config.x_file, config.y_file, languages,
+                     lang_label_to_int_mapping, clip_length=100,
+                     clip_sents=True, padding=True)
+    X = X[:2500]
+    y = y[:2500]
+
+    print("Converting characters to numbers, generating vocabulary...")
+    numeric_sequences, vocabulary = get_numeric_representations_sents(X)
+
+    print(vocabulary)
+
+    print("Padding sequences...")
+    padded_sequences = pad_sequence(
+        numeric_sequences, batch_first=True, padding_value=0.0)
+
+    # print("Generating one hot representations...")
+    # one_hot_vec_sequences = create_one_hot_vectors(
+    #     padded_sequences, vocabulary)
+
+    print("Creating training data generator...")
+    training_generator = initialize_data_generator(
+        padded_sequences, y, config.BATCH_SIZE)
+
+    print("Initializing the network...")
+    model, criterion, optimizer = initialize_network(len(vocabulary) + 1, len(
+        padded_sequences[0]), 200, 300, len(languages), 2, 0.2, config.LEARNING_RATE)
+
+    print("Training the model...")
+    model = train_model(training_generator, model, criterion, optimizer)
