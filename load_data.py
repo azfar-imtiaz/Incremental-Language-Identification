@@ -18,28 +18,39 @@ def load_data(x_file, y_file, languages, lang_label_to_int_mapping, clip_length=
             else:
                 sent = x_data[index]
 
-            # this will add 100 sentences for each sent
-            if padding is True:
-                for index in range(len(sent)):
-                    X.append([x for x in sent[:index + 1]])
-                    y.append(lang_label_to_int_mapping[lang_label])
             # this will add just the sent
-            else:
-                X.append([x for x in sent])
-                y.append(lang_label_to_int_mapping[lang_label])
+            X.append(sent)
+            y.append(lang_label_to_int_mapping[lang_label])
 
     return X, y
 
 
-def get_numeric_representations_sents(sents):
-    # using vocabulary to get word-to-integer mapping and creating numeric representations through that
+def get_clipped_sentences(sents, labels):
+    # this function returns 100 sentences for each sentence
+    character_wise_sents = []
+    proportioned_labels = []
+    for sent, label in zip(sents, labels):
+        # this will add 100 sentences for each sent
+        for index in range(len(sent)):
+            character_wise_sents.append([x for x in sent[:index + 1]])
+            proportioned_labels.append(label)
+    return character_wise_sents, proportioned_labels
+
+
+def generate_vocabulary(sents):
+    sents = [[x for x in sent] for sent in sents]
     vocabulary = list(set(sum(sents, [])))
     char_to_int_mapping = {char: i + 1 for i, char in enumerate(vocabulary)}
-    sent_vectors = [[char_to_int_mapping[char]
-                     for char in list(sent)] for sent in sents]
+    return char_to_int_mapping, vocabulary
+
+
+def get_numeric_representations_sents(sents, vocab_mapping):
+    # using vocabulary to get word-to-integer mapping and creating numeric representations through that
+    sent_vectors = [[vocab_mapping[char]
+                     for char in sent] for sent in sents]
 
     sent_vectors_tensors = [Tensor(vec) for vec in sent_vectors]
-    return sent_vectors_tensors, vocabulary
+    return sent_vectors_tensors
 
 
 def create_one_hot_vectors(sequences, vocabulary):
