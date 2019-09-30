@@ -6,23 +6,27 @@ from sklearn.model_selection import train_test_split
 # import random
 
 import config
-from GRUNet import GRUNet
+from GRUNet import GRUNet, CharMinimizationNet
 from load_data import load_data, get_numeric_representations_sents, initialize_data_generator, generate_vocabulary, get_clipped_sentences
 
 
 def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate):
     # initializing the network
-    model = GRUNet(vocab_size=vocab_size, seq_len=seq_len, input_size=input_size,
-                   hidden_size=hidden_size, output_size=output_size, num_layers=num_layers,
-                   dropout=dropout)
+    gru_model = GRUNet(vocab_size=vocab_size, seq_len=seq_len, input_size=input_size,
+                       hidden_size=hidden_size, output_size=output_size, num_layers=num_layers,
+                       dropout=dropout)
 
-    print(model)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=learning_rate)
-    return model, criterion, optimizer
+    print(gru_model)
+
+    char_min_model = CharMinimizationNet()
+    # reduction='none' means that you don't average out the loss of a batch, but rather get the loss
+    # as a list of loss values - the loss of each individual loss in the batch
+    criterion = nn.CrossEntropyLoss(reduction='none')
+    optimizer = Adam(gru_model.parameters(), lr=learning_rate)
+    return gru_model, char_min_model, criterion, optimizer
 
 
-def train_model(training_generator, model, criterion, optimizer):
+def train_model(training_generator, gru_model, criterion, optimizer):
     # training the model
     for epoch in range(config.NUM_EPOCHS):
         print("Epoch: %d" % (epoch + 1))
@@ -37,15 +41,24 @@ def train_model(training_generator, model, criterion, optimizer):
             # for index, (input_seq, output_seq) in enumerate(zip(padded_sequences, y)):  --> This is for batch size 1
             optimizer.zero_grad()
             # output = model(torch.stack([input_seq]).long())  --> This is for batch size 1
-            output = model(local_batch.long())
+            output = gru_model(local_batch.long())
             # loss = criterion(output, torch.LongTensor([output_seq]))  --> This is for batch size 1
             loss = criterion(output, local_labels.long())
+            # get the number of characters in each sequence in the batch
+            char_lengths = []
+            for t in local_batch:
+                non_zero_indices = torch.nonzero(t)
+                char_lengths.append(non_zero_indices.size(0))
+            # multiply the losses of the batch with the character lengths
+            loss *= torch.Tensor(char_lengths)
+            # take mean of the loss
+            loss = loss.mean()
             loss.backward()
             optimizer.step()
 
             epoch_loss += loss.item()
         print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
-    return model
+    return gru_model
 
 
 def test_model(model, vocab_mapping, X_test, Y_test):
@@ -117,7 +130,7 @@ if __name__ == '__main__':
     # one_hot_vec_sequences = create_one_hot_vectors(
     #     padded_sequences, vocabulary)
 
-    print("Creating training and testing data generators...")
+    print("Creating training data generator...")
     print("Total training instances: {}".format(len(padded_sequences_train)))
     training_generator = initialize_data_generator(
         padded_sequences_train, Y_train, config.BATCH_SIZE)
@@ -126,12 +139,13 @@ if __name__ == '__main__':
     vocab_size = len(vocabulary) + 1
     output_size = len(languages)
     seq_len = len(padded_sequences_train[0])
-    model, criterion, optimizer = initialize_network(
+    gru_model, char_min_model, criterion, optimizer = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
         output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE)
 
     print("Training the model...")
-    model = train_model(training_generator, model, criterion, optimizer)
+    gru_model = train_model(
+        training_generator, gru_model, criterion, optimizer)
 
     print("Testing the model...")
-    test_model(model, vocab_mapping, X_test, Y_test)
+    test_model(gru_model, vocab_mapping, X_test, Y_test)

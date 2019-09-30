@@ -28,3 +28,13 @@ class GRUNet(nn.Module):
 
     def init_hidden(self, seq_len):
         return torch.zeros(self.num_layers, seq_len, self.hidden_size).float()
+
+
+class CharMinimizationNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(1, 1)
+
+    def forward(self, num_chars):
+        output = self.fc(torch.FloatTensor([num_chars]))
+        return output
