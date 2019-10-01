@@ -41,7 +41,8 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
         padded_sequences, y = zip(*zipped_data)
         '''
         epoch_loss = 0.0
-        for local_batch, local_labels in training_generator:
+        for i, (local_batch, local_labels) in enumerate(training_generator):
+            print("\t%d" % i)
             # move local_batch and local_labels to device
             local_batch = local_batch.to(dev)
             local_labels = local_labels.to(dev)
@@ -49,8 +50,10 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
             optimizer.zero_grad()
             # output = model(torch.stack([input_seq]).long())  --> This is for batch size 1
             output = gru_model(local_batch.long())
+            print(output.device)
             # loss = criterion(output, torch.LongTensor([output_seq]))  --> This is for batch size 1
             loss = criterion(output, local_labels.long())
+            print(loss.device)
             if loss_type != 1:
                 # get the number of characters in each sequence in the batch
                 char_lengths = []
@@ -65,6 +68,7 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
                     loss += torch.Tensor(char_lengths)
             # take mean of the loss
             loss = loss.mean()
+            print(loss.device)
             loss.backward()
             optimizer.step()
 
