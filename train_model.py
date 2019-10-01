@@ -12,11 +12,11 @@ from GRUNet import GRUNet, CharMinimizationNet
 from load_data import load_data, get_numeric_representations_sents, initialize_data_generator, generate_vocabulary, get_clipped_sentences
 
 
-def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate):
+def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, dev):
     # initializing the network
     gru_model = GRUNet(vocab_size=vocab_size, seq_len=seq_len, input_size=input_size,
                        hidden_size=hidden_size, output_size=output_size, num_layers=num_layers,
-                       dropout=dropout)
+                       dropout=dropout, dev=dev)
 
     print(gru_model)
 
@@ -129,12 +129,12 @@ if __name__ == '__main__':
     vocab_size = len(vocabulary) + 1
     output_size = len(languages)
     seq_len = len(padded_sequences_train[0])
+    dev = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     gru_model, char_min_model, criterion, optimizer = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
-        output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE)
+        output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE, dev)
 
     print("Training the model...")
-    dev = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     print(dev)
     gru_model = train_model(
         training_generator, gru_model, criterion, optimizer, args.num_epochs, args.loss_function_type)

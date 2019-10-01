@@ -4,11 +4,12 @@ import torch
 
 
 class GRUNet(nn.Module):
-    def __init__(self, vocab_size, seq_len, input_size, hidden_size, num_layers, output_size, dropout=0.0):
+    def __init__(self, vocab_size, seq_len, input_size, hidden_size, num_layers, output_size, dev, dropout=0.0):
         super().__init__()
         self.num_layers = 2
         self.input_size = input_size
         self.hidden_size = hidden_size
+        self.dev = dev
         self.emb = nn.Embedding(vocab_size, input_size)
         self.gru = nn.GRU(input_size, hidden_size,
                           num_layers=self.num_layers, dropout=dropout)
@@ -18,6 +19,7 @@ class GRUNet(nn.Module):
     def forward(self, sequence):
         output = self.emb(sequence)
         hidden_layer = self.init_hidden(len(sequence[0]))
+        hidden_layer = hidden_layer.to(self.dev)
         output, _ = self.gru(output, hidden_layer)
         output = output.contiguous().view(-1, self.hidden_size *
                                           len(sequence[0]))
