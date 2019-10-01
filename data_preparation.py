@@ -1,3 +1,6 @@
+import config
+
+
 def read_data_from_files(filename_x, filename_y, languages):
     X = []
     y = []
@@ -29,7 +32,7 @@ def write_data_to_files(X, y, filename_x, filename_y):
 
 
 if __name__ == '__main__':
-    languages = ['urd', 'ara', 'fars', 'swe', 'fin']
+    languages = config.LANGUAGES
 
     x_train_filename = "wili-2018/x_train.txt"
     y_train_filename = "wili-2018/y_train.txt"

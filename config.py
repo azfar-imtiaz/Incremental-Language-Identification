@@ -1,8 +1,9 @@
-x_file = 'wili-2018/x_train.txt'
-y_file = 'wili-2018/y_train.txt'
+x_file = 'x_train_subset_langs.txt'
+y_file = 'y_train_subset_langs.txt'
+LANGUAGES = ['urd', 'ara', 'fas', 'swe', 'fin']
 
 # number of epochs for training
-NUM_EPOCHS = 3
+NUM_EPOCHS = 5
 BATCH_SIZE = 400
 INPUT_SIZE = 200
 HIDDEN_SIZE = 300
