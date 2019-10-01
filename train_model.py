@@ -141,7 +141,7 @@ if __name__ == '__main__':
     print("Training the model...")
     print(dev)
     gru_model = train_model(
-        training_generator, gru_model, criterion, optimizer, args.num_epochs, args.loss_function_type)
+        training_generator, gru_model, criterion, optimizer, args.num_epochs, dev, args.loss_function_type)
 
     print("Saving model to disk...")
     joblib.dump(gru_model, config.GRU_MODEL_PATH)
