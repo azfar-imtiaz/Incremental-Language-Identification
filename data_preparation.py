@@ -22,10 +22,14 @@ def write_data_to_files(X, y, filename_x, filename_y):
     wfile_y = open(filename_y, 'w')
     for index in range(len(X)):
         wfile_x.write(X[index])
-        wfile_x.write('\n')
+        # add line break only if we are not at last record of file
+        if index < len(X) - 1:
+            wfile_x.write('\n')
 
         wfile_y.write(y[index])
-        wfile_y.write('\n')
+        # add line break only if we are not at last record of file
+        if index < len(X) - 1:
+            wfile_y.write('\n')
 
     wfile_x.close()
     wfile_y.close()
