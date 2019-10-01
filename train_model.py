@@ -28,7 +28,9 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
     return gru_model, char_min_model, criterion, optimizer
 
 
-def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, loss_type=1):
+def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, dev='cpu', loss_type=1):
+    # move the model to device
+    gru_model = gru_model.to(dev)
     # training the model
     for epoch in range(num_epochs):
         print("Epoch: %d" % (epoch + 1))
@@ -40,6 +42,9 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
         '''
         epoch_loss = 0.0
         for local_batch, local_labels in training_generator:
+            # move local_batch and local_labels to device
+            local_batch = local_batch.to(dev)
+            local_labels = local_labels.to(dev)
             # for index, (input_seq, output_seq) in enumerate(zip(padded_sequences, y)):  --> This is for batch size 1
             optimizer.zero_grad()
             # output = model(torch.stack([input_seq]).long())  --> This is for batch size 1
@@ -129,6 +134,8 @@ if __name__ == '__main__':
         output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE)
 
     print("Training the model...")
+    dev = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    print(dev)
     gru_model = train_model(
         training_generator, gru_model, criterion, optimizer, args.num_epochs, args.loss_function_type)
 
