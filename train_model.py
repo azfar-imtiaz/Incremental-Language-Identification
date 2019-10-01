@@ -95,8 +95,8 @@ if __name__ == '__main__':
     print("Loading data...")
     X, Y = load_data(args.x_file, args.y_file, languages,
                      lang_label_to_int_mapping, clip_length=100, clip_sents=True)
-    X = X[:500]
-    Y = Y[:500]
+    # X = X[:500]
+    # Y = Y[:500]
 
     print("Creating train-test split...")
     X_train, X_test, Y_train, Y_test = train_test_split(
