@@ -4,23 +4,25 @@ from torch.utils import data
 from Dataset import Dataset
 
 
-def load_data(x_file, y_file, languages, lang_label_to_int_mapping, clip_length=100, clip_sents=False, padding=False):
+def load_data(x_file, y_file, languages, lang_label_to_int_mapping, clip_length=100, clip_sents=False):
+    # this function reads the language sentences and labels from the training or testing files, and clips them to 100
+    # characters of clip_sents is True
     X = []
     y = []
 
-    x_data = open(x_file, 'r').read().split('\n')
-    y_data = open(y_file, 'r').read().split('\n')
+    with open(x_file, 'r') as rfile:
+        x_data = rfile.read().split('\n')
+    with open(y_file, 'r') as rfile:
+        y_data = rfile.read().split('\n')
     for index in range(len(x_data)):
         lang_label = y_data[index]
-        if lang_label in languages:
-            if clip_sents is True:
-                sent = x_data[index][:clip_length]
-            else:
-                sent = x_data[index]
+        if clip_sents is True:
+            sent = x_data[index][:clip_length]
+        else:
+            sent = x_data[index]
 
-            # this will add just the sent
-            X.append(sent)
-            y.append(lang_label_to_int_mapping[lang_label])
+        X.append(sent)
+        y.append(lang_label_to_int_mapping[lang_label])
 
     return X, y
 
