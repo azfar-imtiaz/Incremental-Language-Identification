@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from torch.nn.utils.rnn import pad_sequence
+import joblib
+import argparse
 from sklearn.model_selection import train_test_split
 # import random
 
@@ -26,9 +28,9 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
     return gru_model, char_min_model, criterion, optimizer
 
 
-def train_model(training_generator, gru_model, criterion, optimizer):
+def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, loss_type=1):
     # training the model
-    for epoch in range(config.NUM_EPOCHS):
+    for epoch in range(num_epochs):
         print("Epoch: %d" % (epoch + 1))
         '''
         # This is for batch size 1 - need to manually shuffle the data
@@ -44,15 +46,20 @@ def train_model(training_generator, gru_model, criterion, optimizer):
             output = gru_model(local_batch.long())
             # loss = criterion(output, torch.LongTensor([output_seq]))  --> This is for batch size 1
             loss = criterion(output, local_labels.long())
-            # get the number of characters in each sequence in the batch
-            char_lengths = []
-            for t in local_batch:
-                non_zero_indices = torch.nonzero(t)
-                char_lengths.append(non_zero_indices.size(0))
-            # multiply the losses of the batch with the character lengths
-            loss *= torch.Tensor(char_lengths)
-            # take mean of the loss
-            loss = loss.mean()
+            if loss_type != 1:
+                # get the number of characters in each sequence in the batch
+                char_lengths = []
+                for t in local_batch:
+                    non_zero_indices = torch.nonzero(t)
+                    char_lengths.append(non_zero_indices.size(0))
+
+                if loss_type == 2:
+                    # multiply the losses of the batch with the character lengths
+                    loss *= torch.Tensor(char_lengths)
+                elif loss_type == 3:
+                    loss += torch.Tensor(char_lengths)
+                # take mean of the loss
+                loss = loss.mean()
             loss.backward()
             optimizer.step()
 
@@ -96,15 +103,27 @@ def test_model(model, vocab_mapping, X_test, Y_test):
 
 
 if __name__ == '__main__':
-    languages = ['urd', 'fars', 'ara']
+
+    parser = argparse.ArgumentParser(
+        description="Train a recurrent network for language identification")
+    parser.add_argument("-X", "--train_x", dest="x_file", type=str,
+                        help="Specify the name of the file to load training sentences from")
+    parser.add_argument("-Y", "--train_y", dest="y_file", type=str,
+                        help="Specify the name of th efile to load training labels from")
+    parser.add_argument("-E", "--epochs", dest="num_epochs", type=int,
+                        help="Specify the number of epochs for training the model")
+    parser.add_argument("-L", "--loss", dest="loss_function_type", type=int,
+                        help="Specify the loss function to be used. 1=CrossEntropyLoss, 2=CrossEntropy with character length multiplied, 3=CrossEntropy with character length added.")
+    args = parser.parse_args()
+
+    languages = config.LANGUAGES
     lang_label_to_int_mapping = {
         lang_label: i for i, lang_label in enumerate(languages)
     }
 
     print("Loading data...")
-    X, Y = load_data(config.x_file, config.y_file, languages,
-                     lang_label_to_int_mapping, clip_length=100,
-                     clip_sents=True)
+    X, Y = load_data(args.x_file, args.y_file, languages,
+                     lang_label_to_int_mapping, clip_length=100, clip_sents=True)
     X = X[:500]
     Y = Y[:500]
 
@@ -145,7 +164,11 @@ if __name__ == '__main__':
 
     print("Training the model...")
     gru_model = train_model(
-        training_generator, gru_model, criterion, optimizer)
+        training_generator, gru_model, criterion, optimizer, args.num_epochs, args.loss_function_type)
 
-    print("Testing the model...")
-    test_model(gru_model, vocab_mapping, X_test, Y_test)
+    print("Saving model to disk...")
+    joblib.dump(gru_model, config.GRU_MODEL_PATH)
+    joblib.dump(lang_label_to_int_mapping, config.LANG_LABEL_MAPPING)
+
+    # print("Testing the model...")
+    # test_model(gru_model, vocab_mapping, X_test, Y_test)

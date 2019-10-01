@@ -10,3 +10,6 @@ HIDDEN_SIZE = 300
 GRU_NUM_LAYERS = 2
 DROPOUT = 0.2
 LEARNING_RATE = 0.01
+
+GRU_MODEL_PATH = "gru_model.pkl"
+LANG_LABEL_MAPPING = "lang_label_mapping.pkl"
