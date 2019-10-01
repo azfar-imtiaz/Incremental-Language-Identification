@@ -12,4 +12,5 @@ DROPOUT = 0.2
 LEARNING_RATE = 0.01
 
 GRU_MODEL_PATH = "gru_model.pkl"
+VOCAB_MAPPING = "vocab_mapping.pkl"
 LANG_LABEL_MAPPING = "lang_label_mapping.pkl"

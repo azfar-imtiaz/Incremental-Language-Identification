@@ -48,8 +48,19 @@ def generate_vocabulary(sents):
 
 def get_numeric_representations_sents(sents, vocab_mapping):
     # using vocabulary to get word-to-integer mapping and creating numeric representations through that
-    sent_vectors = [[vocab_mapping[char]
-                     for char in sent] for sent in sents]
+    sent_vectors = []
+    for sent in sents:
+        sent_vec = []
+        for char in sent:
+            try:
+                sent_vec.append(vocab_mapping[char])
+            except KeyError:
+                sent_vec.append(0)
+
+        sent_vectors.append(sent_vec)
+
+    # sent_vectors = [[vocab_mapping[char]
+    #                  for char in sent] for sent in sents]
 
     sent_vectors_tensors = [Tensor(vec) for vec in sent_vectors]
     return sent_vectors_tensors

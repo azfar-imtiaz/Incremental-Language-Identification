@@ -58,48 +58,14 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
                     loss *= torch.Tensor(char_lengths)
                 elif loss_type == 3:
                     loss += torch.Tensor(char_lengths)
-                # take mean of the loss
-                loss = loss.mean()
+            # take mean of the loss
+            loss = loss.mean()
             loss.backward()
             optimizer.step()
 
             epoch_loss += loss.item()
         print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
     return gru_model
-
-
-def test_model(model, vocab_mapping, X_test, Y_test):
-    total_predictions = 0
-    correct_predictions = 0
-
-    for test_sent, test_label in zip(X_test, Y_test):
-        # get 100 clipped sents for test_sent
-        clipped_sents, _ = get_clipped_sentences(
-            [test_sent], [test_label])
-        # get numeric representation of test sentence
-        numeric_sents = get_numeric_representations_sents(
-            clipped_sents, vocab_mapping)
-        # get 100 padded sequences
-        padded_sequences = pad_sequence(
-            numeric_sents, batch_first=True, padding_value=0.0)
-
-        for padded_seq in padded_sequences:
-            total_predictions += 1
-            output = model(torch.stack([padded_seq]).long())
-            _, prediction = torch.max(output.data, dim=1)
-            if prediction == test_label:
-                correct_predictions += 1
-                break
-
-            # for local_batch, local_labels in testing_generator:
-            #     outputs = model(local_batch.long())
-            #     # the first output of torch.max is the max value, the second output is the index of mac value
-            #     _, predicted = torch.max(outputs.data, dim=1)
-            #     total_predictions += local_labels.size(0)
-            #     correct_predictions += (predicted == local_labels).sum().item()
-
-    print("Accuracy of model: {}".format(
-        (correct_predictions / total_predictions) * 100))
 
 
 if __name__ == '__main__':
@@ -109,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument("-X", "--train_x", dest="x_file", type=str,
                         help="Specify the name of the file to load training sentences from")
     parser.add_argument("-Y", "--train_y", dest="y_file", type=str,
-                        help="Specify the name of th efile to load training labels from")
+                        help="Specify the name of the file to load training labels from")
     parser.add_argument("-E", "--epochs", dest="num_epochs", type=int,
                         help="Specify the number of epochs for training the model")
     parser.add_argument("-L", "--loss", dest="loss_function_type", type=int,
@@ -168,6 +134,7 @@ if __name__ == '__main__':
 
     print("Saving model to disk...")
     joblib.dump(gru_model, config.GRU_MODEL_PATH)
+    joblib.dump(vocab_mapping, config.VOCAB_MAPPING)
     joblib.dump(lang_label_to_int_mapping, config.LANG_LABEL_MAPPING)
 
     # print("Testing the model...")
