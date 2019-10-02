@@ -12,7 +12,7 @@ from GRUNet import GRUNet, CharMinimizationNet
 from load_data import load_data, get_numeric_representations_sents, initialize_data_generator, generate_vocabulary, get_clipped_sentences
 
 
-def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, dev):
+def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, loss_function_type, dev):
     # initializing the network
     gru_model = GRUNet(vocab_size=vocab_size, seq_len=seq_len, input_size=input_size,
                        hidden_size=hidden_size, output_size=output_size, num_layers=num_layers,
@@ -22,8 +22,11 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
 
     char_min_model = CharMinimizationNet()
     # reduction='none' means that you don't average out the loss of a batch, but rather get the loss
-    # as a list of loss values - the loss of each individual loss in the batch
-    criterion = nn.CrossEntropyLoss(reduction='none')
+    # as a list of loss values - the loss of each individual loss in the batch. Need this for the custom losses
+    if loss_function_type == 1:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        criterion = nn.CrossEntropyLoss(reduction='none')
     optimizer = Adam(gru_model.parameters(), lr=learning_rate)
     return gru_model, char_min_model, criterion, optimizer
 
@@ -59,14 +62,16 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
                     char_lengths.append(non_zero_indices.size(0))
                 char_lengths = torch.Tensor(char_lengths)
                 char_lengths = char_lengths.to(dev)
+                print(char_lengths)
+                print(loss)
 
                 if loss_type == 2:
                     # multiply the losses of the batch with the character lengths
                     loss *= char_lengths
                 elif loss_type == 3:
                     loss += char_lengths
-            # take mean of the loss
-            loss = loss.mean()
+                # take mean of the loss
+                loss = loss.mean()
             loss.backward()
             optimizer.step()
 
@@ -134,7 +139,7 @@ if __name__ == '__main__':
     dev = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     gru_model, char_min_model, criterion, optimizer = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
-        output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE, dev)
+        output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE, args.loss_function_type, dev)
 
     print("Training the model...")
     gru_model = train_model(
