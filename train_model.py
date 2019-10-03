@@ -5,6 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 import joblib
 import argparse
 from sklearn.model_selection import train_test_split
+from matplotlib import pyplot as plt
 # import random
 
 import config
@@ -34,6 +35,7 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
 def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, dev='cpu', loss_type=1):
     # move the model to device
     gru_model = gru_model.to(dev)
+    loss_values = []
     # training the model
     for epoch in range(num_epochs):
         print("Epoch: %d" % (epoch + 1))
@@ -76,8 +78,14 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
             optimizer.step()
 
             epoch_loss += loss.item()
+        loss_values.append(epoch_loss)
         print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
-    return gru_model
+    return gru_model, loss_values
+
+
+def plot_loss(loss_values):
+    plt.plot(loss_values)
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -142,7 +150,7 @@ if __name__ == '__main__':
         output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE, args.loss_function_type, dev)
 
     print("Training the model...")
-    gru_model = train_model(
+    gru_model, loss_values = train_model(
         training_generator, gru_model, criterion, optimizer, args.num_epochs, dev, args.loss_function_type)
 
     print("Saving model to disk...")
