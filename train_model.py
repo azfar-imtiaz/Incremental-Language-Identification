@@ -83,9 +83,10 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
     return gru_model, loss_values
 
 
-def plot_loss(loss_values):
+def plot_loss(loss_values, loss_function_type):
     plt.plot(loss_values)
-    plt.show()
+    # plt.show()
+    plt.savefig("./loss_values_plot_%d.png" % loss_function_type)
 
 
 if __name__ == '__main__':
@@ -152,6 +153,9 @@ if __name__ == '__main__':
     print("Training the model...")
     gru_model, loss_values = train_model(
         training_generator, gru_model, criterion, optimizer, args.num_epochs, dev, args.loss_function_type)
+
+    print("Plotting loss values...")
+    plot_loss(loss_values, args.loss_function_type)
 
     print("Saving model to disk...")
     joblib.dump(gru_model, config.GRU_MODEL_PATH)
