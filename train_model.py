@@ -5,12 +5,14 @@ from torch.nn.utils.rnn import pad_sequence
 import joblib
 import argparse
 from sklearn.model_selection import train_test_split
-from matplotlib import pyplot as plt
+import matplotlib
 # import random
 
 import config
 from GRUNet import GRUNet, CharMinimizationNet
 from load_data import load_data, get_numeric_representations_sents, initialize_data_generator, generate_vocabulary, get_clipped_sentences
+
+matplotlib.use('Agg')
 
 
 def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, loss_function_type, dev):
@@ -84,9 +86,9 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
 
 
 def plot_loss(loss_values, loss_function_type):
-    plt.plot(loss_values)
+    matplotlib.pyplot.plot(loss_values)
     # plt.show()
-    plt.savefig("./loss_values_plot_%d.png" % loss_function_type)
+    matplotlib.pyplot.savefig("./loss_values_plot_%d.png" % loss_function_type)
 
 
 if __name__ == '__main__':
