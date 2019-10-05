@@ -13,6 +13,7 @@ from GRUNet import GRUNet, CharMinimizationNet
 from load_data import load_data, get_numeric_representations_sents, initialize_data_generator, generate_vocabulary, get_clipped_sentences
 
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 
 def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, loss_function_type, dev):
@@ -86,9 +87,9 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
 
 
 def plot_loss(loss_values, loss_function_type):
-    matplotlib.pyplot.plot(loss_values)
+    plt.plot(loss_values)
     # plt.show()
-    matplotlib.pyplot.savefig("./loss_values_plot_%d.png" % loss_function_type)
+    plt.savefig("./loss_values_plot_%d.png" % loss_function_type)
 
 
 if __name__ == '__main__':
@@ -113,8 +114,8 @@ if __name__ == '__main__':
     print("Loading data...")
     X, Y = load_data(args.x_file, args.y_file, languages,
                      lang_label_to_int_mapping, clip_length=100, clip_sents=True)
-    # X = X[:500]
-    # Y = Y[:500]
+    X = X[:500]
+    Y = Y[:500]
 
     print("Creating train-test split...")
     X_train, X_test, Y_train, Y_test = train_test_split(
