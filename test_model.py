@@ -24,7 +24,7 @@ def test_model(model, vocab_mapping, X_test, Y_test, dev):
         padded_sequences = pad_sequence(
             numeric_sents, batch_first=True, padding_value=0.0)
         correct_predictions_per_instance = 0
-        num_chars_until_hit_score = 0
+        num_chars_until_hit_score = 100
 
         for padded_seq in padded_sequences:
             total_predictions += 1
