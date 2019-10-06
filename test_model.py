@@ -74,8 +74,8 @@ if __name__ == '__main__':
     parser.add_argument("-M", "--model", dest="model_path", type=str,
                         help="Specify the path to the trained model")
     args = parser.parse_args()
-    # dev = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
-    dev = torch.device("cpu")
+    dev = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
+    # dev = torch.device("cpu")
 
     languages = config.LANGUAGES
 
