@@ -34,7 +34,7 @@ def test_model(model, vocab_mapping, X_test, Y_test, dev):
             _, prediction = torch.max(output.data, dim=1)
             if prediction == test_label:
                 correct_predictions_per_instance += 1
-                if num_chars_until_hit_score == 0:
+                if num_chars_until_hit_score == 100:
                     num_chars_until_hit_score = torch.nonzero(
                         padded_seq).size(0)
                     # add this hit score to list of num_char_until_hit_score for averaging later
