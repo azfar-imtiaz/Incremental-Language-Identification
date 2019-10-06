@@ -158,7 +158,7 @@ if __name__ == '__main__':
     plot_loss(loss_values, args.loss_function_type)
 
     print("Saving model to disk...")
-    joblib.dump(gru_model, "{}_{}".format(
+    joblib.dump(gru_model, "{}_{}.pkl".format(
         config.GRU_MODEL_PATH, args.loss_function_type))
     joblib.dump(vocab_mapping, config.VOCAB_MAPPING)
     joblib.dump(lang_label_to_int_mapping, config.LANG_LABEL_MAPPING)

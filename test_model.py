@@ -29,7 +29,7 @@ def test_model(model, vocab_mapping, X_test, Y_test, dev):
         for padded_seq in padded_sequences:
             total_predictions += 1
             input = torch.stack([padded_seq]).long()
-            # input = input.to(dev)
+            input = input.to(dev)
             output = model(input)
             _, prediction = torch.max(output.data, dim=1)
             if prediction == test_label:
