@@ -114,8 +114,6 @@ if __name__ == '__main__':
     print("Loading data...")
     X, Y = load_data(args.x_file, args.y_file, languages,
                      lang_label_to_int_mapping, clip_length=100, clip_sents=True)
-    X = X[:500]
-    Y = Y[:500]
 
     print("Creating train-test split...")
     X_train, X_test, Y_train, Y_test = train_test_split(
@@ -161,7 +159,8 @@ if __name__ == '__main__':
     plot_loss(loss_values, args.loss_function_type)
 
     print("Saving model to disk...")
-    joblib.dump(gru_model, config.GRU_MODEL_PATH)
+    joblib.dump(gru_model, "{}_{}".format(
+        config.GRU_MODEL_PATH, args.loss_function_type))
     joblib.dump(vocab_mapping, config.VOCAB_MAPPING)
     joblib.dump(lang_label_to_int_mapping, config.LANG_LABEL_MAPPING)
 
