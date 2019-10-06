@@ -7,7 +7,7 @@ import config
 from load_data import load_data, get_numeric_representations_sents, get_clipped_sentences
 
 
-def test_model(model, vocab_mapping, X_test, Y_test):
+def test_model(model, vocab_mapping, X_test, Y_test, dev):
     total_predictions = 0
     correct_predictions = 0
     num_chars_until_hit_score_list = []
@@ -28,7 +28,9 @@ def test_model(model, vocab_mapping, X_test, Y_test):
 
         for padded_seq in padded_sequences:
             total_predictions += 1
-            output = model(torch.stack([padded_seq]).long())
+            input = torch.stack([padded_seq]).long()
+            # input = input.to(dev)
+            output = model(input)
             _, prediction = torch.max(output.data, dim=1)
             if prediction == test_label:
                 correct_predictions_per_instance += 1
@@ -72,6 +74,8 @@ if __name__ == '__main__':
     parser.add_argument("-M", "--model", dest="model_path", type=str,
                         help="Specify the path to the trained model")
     args = parser.parse_args()
+    # dev = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
+    dev = torch.device("cpu")
 
     languages = config.LANGUAGES
 
@@ -79,10 +83,11 @@ if __name__ == '__main__':
     lang_label_to_int_mapping = joblib.load(config.LANG_LABEL_MAPPING)
     vocab_mapping = joblib.load(config.VOCAB_MAPPING)
     gru_model = joblib.load(args.model_path)
+    gru_model = gru_model.to(dev)
 
     print("Loading testing data...")
     X, Y = load_data(args.x_file, args.y_file, languages,
                      lang_label_to_int_mapping, clip_sents=True)
 
     print("Getting accuracy on testing data...")
-    test_model(gru_model, vocab_mapping, X, Y)
+    test_model(gru_model, vocab_mapping, X, Y, dev)

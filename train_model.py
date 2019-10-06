@@ -72,6 +72,7 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
                     # multiply the losses of the batch with the character lengths
                     loss *= char_lengths
                 elif loss_type == 3:
+                    # add the losses of the batch with the character lengths
                     loss += char_lengths
                 # take mean of the loss
                 loss = loss.mean()
@@ -144,7 +145,7 @@ if __name__ == '__main__':
     vocab_size = len(vocabulary) + 1
     output_size = len(languages)
     seq_len = len(padded_sequences_train[0])
-    dev = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    dev = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
     gru_model, char_min_model, criterion, optimizer = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
         output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE, args.loss_function_type, dev)
