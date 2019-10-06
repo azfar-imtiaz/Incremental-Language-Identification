@@ -1,2 +1,81 @@
 # Incremental-Language-Identification
 Train RNN model in PyTorch to identify a language in as few characters as possible
+
+## Languages used
+The languages that I trained the model over for this assignment are as follows:
+
+- Urdu
+- Arabic
+- Persian
+- Hindi
+- Egyptian Arabic
+- Swedish
+- Finnish
+- Danish
+- German
+- English.
+
+The first five languages in this list are either very similar to each other (for example Urdu, Hindi and Persian), or/and have very similar roots. I wanted to investigate how difficult it is for a recurrent model to differentiate between them. The first three of the next five languages are Scandanavian, and I wanted to see how well the model can distinguish amongst them, as well as with German and English. My expectations are that the model should not have a hard time differentiating any of the first five languages with the next languages, but it will face more difficulty differentiating amongst the first five or the last five languages.
+
+These languages are specified by their "ISO 369-3" code in the `config.py` file, and you can specify any language here, as well as any number of languages. I have designed the scripts to hopefully be generic enough to be handle this.
+
+### Generating smaller train-test files as per specified languages
+The repository contains the following train-test files:
+
+- x_train_subset_langs.txt
+- y_train_subset_langs.txt
+- x_test_subset_langs.txt
+- y_test_subset_langs.txt
+
+These files have been generated as per the languages mentioned above, using the `data_preparation.py` script. If you want to run the project for a different set of languages, please specify the languages in `config.py`, and then run the `data_preparation.py` script to generate the smaller train-test files as per the languages that you have specified.
+
+## Network Architecture
+The network architecture is specified in the `GRUNet.py` file. It contains an embedding layer which takes the vocabulary size (this increases as more languages are added of course), and creates embeddings of 200 dimensions, or as specified in `input_size`. These embeddings are then fed to the GRU layer, which has a layer size of 2 and a hidden size of 300, or as specified in `hidden_size`. The output of this layer is finally fed to a linear layer, the output of which is equal to the number of languages specified in `output_size`. I do not apply a Softmax or LogSoftmax function at the end to get prediction probabilities, as the loss function I'm using is CrossEntropyLoss, and it calculates the softmax itself. 
+
+In order to make the network architecture somewhat configurable, I have specified the input size, hidden size, number of layers for GRU, dropout for GRU and learning rate for the optimizer in the `config.py` file, and they can be changed from there to experiment with different configurations.
+
+## Training the model
+The main script to train the model is `train_model.py`. It accepts the following command line arguments:
+
+- `-X` --> the path to the file containing the language sentences to be used for training. This is a string value.
+- `-Y` --> the path to the file containing the language labels to be used for training. This is a string value.
+- `-E` --> the number of epochs to be used for training the model. This is an integer value.
+- `-L` --> the loss function to be used for training the model. This is an integer value that can accept a value of 1, 2 or 3. Their functions are as follows:
+	- 1 = use normal CrossEntropyLoss without character length factored in
+	- 2 = CrossEntropyLoss with character lengths multiplied with respective losses
+	- 3 = CrossEntropyLoss with character lengths added to respective losses.
+
+### Specifying batch size
+To specify the batch size, you can specify the value in the `BATCH_SIZE` parameter in the `config.py` file. If you don't want to use batches, please set the batch size here to 1. 
+
+### Training process
+
+#### Loading the data
+The training of the model happens as follows: First, a language label to integer mapping is created for the languages specified in the config file. Then, data is loaded from the sentence data and sentence label files specified in the command line arguments. While loading the sentences, they are each limited to their first 100 characters. A training and validation split is created on this data, with 80% of the data being used for training, and the remaining 20% to be used for validation. 
+
+#### Generating vocabulary and vocabulary-to-integer mapping
+The vocabulary and vocabulary-to-integer mapping is generated using all sentences (training as well as validation). This is to ensure that the validation data doesn't have any characters that there isn't a character-to-integer mapping for. This mapping is initialized from 1 instead of 0, since 0 is reserved for the padding character, and its size is equal to the number of unique characters in the sentences present in the data. 
+
+#### Clipping sentences
+Clipped versions of each sentence in the training data are then generated, with the clipping length specified to 100. This means that for each sentence in the training data, 100 sentences are generated, where the first sentence contains only the first character, the second sentence contains only the first two characters, and so on until the length of the sentence (which is always 100 as the sentences are limited to their first 100 characters). This means that we get a lot more training sentences, and the labels are multipled accordingly - I also thought that this can be looked upon as a form of data augmentation, but I'm not too sure about this.
+
+#### Getting numeric representations of sentences
+The next step is to get the numeric representations of each sentence, where in each sentence, every character is replaced by its numeric representation as specified in the vocabulary-to-integer mapping. This is a relatively straightforward process, and I have added the condition that if the numeric mapping for any character is not found, then its numeric representation is 0. This is done so that if the test data contains a character for some language that is not present in the training language, it shouldn't contain the script. Additional thoughts: Perhaps this replacement character should not be 0 since that's the padding character, but maybe something like the length of the vocabulary + 1. However, I did not face this scenario in the testing enough to test this altered version of replacement character.
+
+#### Padding sequences
+Finally, the numeric representations of sentences are padded using PyTorch's built-in `pad_sequence` function, so we now get sequences of 100 characters length each, where sentences having less than 100 characters are padded to the right by zeros. This is the final transformation done to the data, and it can now be fed into the network for training.
+
+#### Shuffling and generating batches
+For shuffling the data and generating batches, I used PyTorch's `DataLoader` functionality. I had to create a separate class for it (specified in `Dataset.py`), which extends `torch.utils.data`, and I overrode the `__init__`, `__len__` and `__getitem__` functions. To use this, I created a generator for the training data using this class, and fed it the padded sequences and labels for the training data. The batch size I specified here is the same that is present in the `config.py` file. Note: I tried implementing batching myself first, but I ran into a lot of problems, and then found that learning how PyTorch's DataLoader functionality was both more convenient, and more efficient.
+
+#### Loss function types
+The network is initialized using the configurations specified both in the command line parameters as well as the config file, along with the optimizer and loss function (note that the loss function is initialized with reduction set to 'none' in the case of loss function types 2 and 3), and then it is trained over the batches generated by the training generator. 
+	- If the loss function type is 1, I calculate the loss as normal.
+	- If the loss function type is 2, I calculate the loss as normal, which returns me the individual losses of all instances present in the specified batch. To each loss value, I multiply the respective character lengths (which I calculate by getting the number of non-zero elements in the padded sequence), and then take the mean of the loss at the end.
+	- If the loss function type is 3, loss calculation happens in the same manner as in loss function type 2, except that the character lengths are added to the respective losses instead of being multiplied by them.
+The loss values are calculated after each epoch, and are added to a list to be used for plotting the loss later.
+
+NOTE: For the custom loss function types 2 and 3, I also experimented halfway with the idea of creating a separate network which simply takes an input of dimension 1 and returns an output of 1, and updating it through the same loss function. However, I found the other approach (the one I've used) easier, plus as per Asad's comments in the discussion forum for this assignment, "the most likely thing to happen is that LaTeX: mm will tend to 0 as the network learns to ignore the penalty and focus on accuracy", I found it worthwhile to invest in the other approach first.
+
+#### Saving required objects to disk
+Finally, the trained model, the vocabulary-to-integer mapping, and the language-label-to-integer mapping are saved to disk. The path and name for these are all specified in the config file, and can be changed.
