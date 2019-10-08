@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torch.optims.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR
 from torch.nn.utils.rnn import pad_sequence
 import joblib
 import argparse
@@ -50,7 +50,6 @@ def train_model(training_generator, gru_model, criterion, optimizer, scheduler, 
         random.shuffle(zipped_data)
         padded_sequences, y = zip(*zipped_data)
         '''
-        scheduler.step()
         epoch_loss = 0.0
         for i, (local_batch, local_labels) in enumerate(training_generator):
             # move local_batch and local_labels to device
@@ -85,6 +84,8 @@ def train_model(training_generator, gru_model, criterion, optimizer, scheduler, 
             epoch_loss += loss.item()
         loss_values.append(epoch_loss)
         print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
+        scheduler.step()
+
     return gru_model, loss_values
 
 
@@ -113,7 +114,7 @@ if __name__ == '__main__':
         lang_label: i for i, lang_label in enumerate(languages)
     }
 
-    print("loadding data...")
+    print("Loading data...")
     X, Y = load_data(args.x_file, args.y_file, languages,
                      lang_label_to_int_mapping, clip_length=100, clip_sents=True)
 
