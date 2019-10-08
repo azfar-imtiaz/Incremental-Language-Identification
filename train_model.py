@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torch.optims.lr_scheduler import StepLR
 from torch.nn.utils.rnn import pad_sequence
 import joblib
 import argparse
@@ -16,7 +17,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, loss_function_type, dev):
+def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, loss_function_type, num_epochs, dev):
     # initializing the network
     gru_model = GRUNet(vocab_size=vocab_size, seq_len=seq_len, input_size=input_size,
                        hidden_size=hidden_size, output_size=output_size, num_layers=num_layers,
@@ -32,10 +33,11 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
     else:
         criterion = nn.CrossEntropyLoss(reduction='none')
     optimizer = Adam(gru_model.parameters(), lr=learning_rate)
-    return gru_model, char_min_model, criterion, optimizer
+    scheduler = StepLR(optimizer, step_size=int(num_epochs / 3), gamma=0.1)
+    return gru_model, char_min_model, criterion, optimizer, scheduler
 
 
-def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, dev='cpu', loss_type=1):
+def train_model(training_generator, gru_model, criterion, optimizer, scheduler, num_epochs, dev='cpu', loss_type=1):
     # move the model to device
     gru_model = gru_model.to(dev)
     loss_values = []
@@ -48,6 +50,7 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
         random.shuffle(zipped_data)
         padded_sequences, y = zip(*zipped_data)
         '''
+        scheduler.step()
         epoch_loss = 0.0
         for i, (local_batch, local_labels) in enumerate(training_generator):
             # move local_batch and local_labels to device
@@ -110,7 +113,7 @@ if __name__ == '__main__':
         lang_label: i for i, lang_label in enumerate(languages)
     }
 
-    print("Loading data...")
+    print("loadding data...")
     X, Y = load_data(args.x_file, args.y_file, languages,
                      lang_label_to_int_mapping, clip_length=100, clip_sents=True)
 
@@ -146,13 +149,14 @@ if __name__ == '__main__':
     output_size = len(languages)
     seq_len = len(padded_sequences_train[0])
     dev = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
-    gru_model, char_min_model, criterion, optimizer = initialize_network(
+    gru_model, char_min_model, criterion, optimizer, scheduler = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
-        output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE, args.loss_function_type, dev)
+        output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE,
+        args.loss_function_type, args.num_epochs, dev)
 
     print("Training the model...")
     gru_model, loss_values = train_model(
-        training_generator, gru_model, criterion, optimizer, args.num_epochs, dev, args.loss_function_type)
+        training_generator, gru_model, criterion, optimizer, scheduler, args.num_epochs, dev, args.loss_function_type)
 
     print("Plotting loss values...")
     plot_loss(loss_values, args.loss_function_type)
