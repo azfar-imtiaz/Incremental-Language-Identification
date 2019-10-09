@@ -79,3 +79,34 @@ NOTE: For the custom loss function types 2 and 3, I also experimented halfway wi
 
 #### Saving required objects to disk
 Finally, the trained model, the vocabulary-to-integer mapping, and the language-label-to-integer mapping are saved to disk. The path and name for these are all specified in the config file, and can be changed.
+
+### Results
+Here are the results I got for all three loss functions and their respective models:
+
+|                                  | LF 1   | LF 2   | LF 3     |
+|----------------------------------|--------|--------|----------|
+| Training Loss                    | 64.266 | 350.02 | 40640.48 |
+| Model accuracy                   | 67.46% | 70.77% | 66.93%   |
+| Avg no. of chars until hit score | 4.68   | 4.91   | 4.33     |
+| Learning rate                    | 0.0005 | 0.0005 | 0.0005   |
+| No. of epochs                    | 250    | 250    | 250      |
+
+I found these results quite interesting:
+- There is not a lot of difference in the accuracy scores of these models, although it's interesting that LF 2 has the highest accuracy. I would have expected LF 1 to have the highest accuracy, since the other two models also aim to optimize the number of characters until hit score. 
+- The training loss of LF 1 being the lowest makes sense, as the other two loss functions aim to optimize two things at once, so it will probably to take them more epochs to get a lower training loss. LF 3 has a ridiculously high training loss at the end of 250 epochs, but while doing this assignment I have learned that initialization matters a lot when working with neural networks. Even though I trained a model using LF 3 twice, it could be that it started off in a bad local minima and never quite made it out of there.
+- You may note that the learning rate is quite small. This is because when I experimented with higher learning rates, the loss scores would bounce around a lot and never really converge. Eventually I decided upon a leaning rate of 0.0005, which means that the loss values do not bounce around but steadily converge. However, this convergence happens very slow, which is why we might need a lot more epochs for such a learning rate. I thought that the Adam optimizer might help here, but it didn't. I am trying to experiment with PyTorch's StepLR, which helps adjust the learning rate based on number of epochs, will post the results here if interesting.
+- Update: I experimented with PyTorch's StepLR scheduler. I set the initial learning rate to 0.05, and added a gamma of 0.1 and a step size of 83 for 250 epochs. This means that after every 83 epochs, the learning rate will decrease by 0.1, so it will start with a learning rate of 0.05, then it will become 0.005, and then 0.0005. I tried the LF 3 with this functionality, and I noticed that with this configuration, it starts off with a very epoch loss, somewhere around a million. It decreases after that, but I noticed the same fluctuation/bouning around of the epoch loss that I had noticed earlier with a higher learning rate. These are the stats I got with StepLR functionality added into training the model with LF 3:
+
+Training loss: 54028.2615547
+Model accuracy: 60.4722%
+Average number of characters until hit score: 6.22.
+
+It seems like adding in StepLR made things worse everywhere. Moreover, when I tried training a model with StepLR and LF 1, I started getting nan values for loss after a few epochs. When I searched this up online, the first suggestion was to decrease the learning rate. So I assume that a high learning rate doesn't work well for my network, and StepLR didn't help with the custom loss functions as much as I'd hoped. I ended up commenting out the Step LR functionality.
+
+### Training loss plots
+
+![Training Loss with LF 1, no StepLR](loss_values_plot_1.png)
+
+![Training Loss with LF 2, no StepLR](loss_values_plot_2.png)
+
+![Training Loss with LF 3, with StepLR](loss_values_steplr_plot_3.png)
