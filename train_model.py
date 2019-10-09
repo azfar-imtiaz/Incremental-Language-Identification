@@ -86,7 +86,7 @@ def train_model(training_generator, gru_model, criterion, optimizer, scheduler, 
             epoch_loss += loss.item()
         loss_values.append(epoch_loss)
         print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
-        scheduler.step()
+        # scheduler.step()
 
     return gru_model, loss_values
 
