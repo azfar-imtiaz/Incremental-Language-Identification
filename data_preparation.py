@@ -37,17 +37,18 @@ def write_data_to_files(X, y, filename_x, filename_y):
 
 if __name__ == '__main__':
     languages = config.LANGUAGES
+    path_to_files = "../../../usr/local/courses/lt2316-h19/a1/"
 
-    x_train_filename = "wili-2018/x_train.txt"
-    y_train_filename = "wili-2018/y_train.txt"
+    x_train_filename = "{}x_train.txt".format(path_to_files)
+    y_train_filename = "{}y_train.txt".format(path_to_files)
     X, y = read_data_from_files(x_train_filename, y_train_filename, languages)
 
     x_train_subset_filename = "x_train_subset_langs.txt"
     y_train_subset_filename = "y_train_subset_langs.txt"
     write_data_to_files(X, y, x_train_subset_filename, y_train_subset_filename)
 
-    x_test_filename = "wili-2018/x_test.txt"
-    y_test_filename = "wili-2018/y_test.txt"
+    x_test_filename = "{}x_test.txt".format(path_to_files)
+    y_test_filename = "{}y_test.txt".format(path_to_files)
     X, y = read_data_from_files(x_test_filename, y_test_filename, languages)
 
     x_test_subset_filename = "x_test_subset_langs.txt"
