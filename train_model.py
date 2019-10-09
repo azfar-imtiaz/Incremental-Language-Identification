@@ -78,8 +78,8 @@ def train_model(training_generator, gru_model, criterion, optimizer, scheduler, 
                     loss += char_lengths
                 # take mean of the loss
                 loss = loss.mean()
-            if loss.item() < 0.0:
-                loss.item = 0.0
+            if loss.item() <= 0.0:
+                loss.item = 0.0001
             loss.backward()
             optimizer.step()
 
