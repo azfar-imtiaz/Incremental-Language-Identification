@@ -106,6 +106,7 @@ I found these results quite interesting:
 It seems like adding in StepLR made things worse everywhere. Moreover, when I tried training a model with StepLR and LF 1, I started getting nan values for loss after a few epochs. When I searched this up online, the first suggestion was to decrease the learning rate. So I assume that a high learning rate doesn't work well for my network, and StepLR didn't help with the custom loss functions as much as I'd hoped. I ended up commenting out the Step LR functionality.
 
 ### Training loss plots
+Here are some training loss plots:
 
 ![](loss_values_plot_1.png)
 
@@ -118,3 +119,27 @@ It seems like adding in StepLR made things worse everywhere. Moreover, when I tr
 ![](loss_values_steplr_plot_3.png)
 
 **Training Loss with LF 3, with StepLR**
+
+## Evaluating the model
+In order to run the testing script, we need to have 3 objects saved to disk so that the `test_model.py` script can load them and evaluate the model on the test data: the trained model, the vocab-to-int mapping, and the mapping of language names to language labels. The `test_model.py` script is provided with the following command-line arguments:
+
+- `-X` --> the path to the file containing the language sentences to be used for testing. This is a string value.
+- `-Y` --> the path to the file containing the language labels to be used for testing. This is a string value.
+- `-M` --> the path to the model that we're supposed to load for testing. This is a string value.
+
+The vocab-to-int mapping and language-names-to-language-mapping objects are specified in the config file, and are loaded from there.
+
+Testing happens a little differently than training. The sentences are loaded from the testing file one by one, and then the preprocessing techniques are applied to each sentence. Clipped versions of the sentence are generated, so we end up with 100 versions of the one sentence; the characters in these clipped versions are replaced by their numeric indices; the numeric sequences are padded so that they are all equal to a size of 100. These padded sequences are fed one by one into the forward pass of the model, starting with the sequence with smallest number of characters, and we compare the output prediction with the actual label. I keep a track of total predictions made, and correct predictions made; this helps us give the accuracy near the end. Additionally, for each correct prediction, I note save number of characters until hit score. However, this I do only once per testing instance, and I do this for the clipped instance of the test sentence that gave a positive prediction. This might seem convoluted to explain, but the code is pretty straightforward. This helps me calculate the avg_chars_until_hit_score, computed over all testing instances.
+
+For each testing instance, I also print out the total number of correct predictions out of the 100 instances for each testing sentence. 
+
+These results are mentioned above, under the "Results" section of the "Training the model" section.
+
+## Final Thoughts
+I would have liked to train the model over a larger number of epochs, and compare the training loss and model accuracy of LF 1 and LF 2. LF 3 doesn't seem to be a promising variation on the loss function, and therefore doesn't seem worth investing more time in - although perhaps a different variation of the loss function can be looked into.
+
+Additionally, I was disappointed by how the StepLR scheduler didn't help as I had hoped. Perhaps there was something wrong with my implementation of it.
+
+I also didn't fully manage to figure out the nan loss issue that I sometimes got while training the model over LF 1. I tried adding some conditions to change the loss to a miniscule value like 0.0001 when it is nan, but it didn't seem to help.
+
+Finally, another evaluation metric that I wanted to observe was the average number of characters until hit score for each of the languages specified - maybe I'll add that in later on!
