@@ -108,10 +108,13 @@ It seems like adding in StepLR made things worse everywhere. Moreover, when I tr
 ### Training loss plots
 
 ![](loss_values_plot_1.png)
+
 **Training Loss with LF 1, no StepLR**
 
 ![](loss_values_plot_2.png)
+
 **Training Loss with LF 2, no StepLR**
 
 ![](loss_values_steplr_plot_3.png)
+
 **Training Loss with LF 3, with StepLR**
