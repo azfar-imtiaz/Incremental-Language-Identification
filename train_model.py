@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torch.optim.lr_scheduler import StepLR
 from torch.nn.utils.rnn import pad_sequence
 import joblib
 import argparse
@@ -12,12 +11,13 @@ import matplotlib
 import config
 from GRUNet import GRUNet, CharMinimizationNet
 from load_data import load_data, get_numeric_representations_sents, initialize_data_generator, generate_vocabulary, get_clipped_sentences
+from test_model import test_model
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, loss_function_type, num_epochs, dev):
+def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size, num_layers, dropout, learning_rate, loss_function_type, dev):
     # initializing the network
     gru_model = GRUNet(vocab_size=vocab_size, seq_len=seq_len, input_size=input_size,
                        hidden_size=hidden_size, output_size=output_size, num_layers=num_layers,
@@ -33,11 +33,11 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
     else:
         criterion = nn.CrossEntropyLoss(reduction='none')
     optimizer = Adam(gru_model.parameters(), lr=learning_rate)
-    scheduler = StepLR(optimizer, step_size=int(num_epochs / 3), gamma=0.1)
-    return gru_model, char_min_model, criterion, optimizer, scheduler
+    # scheduler = StepLR(optimizer, step_size=int(num_epochs / 3), gamma=0.1)
+    return gru_model, char_min_model, criterion, optimizer
 
 
-def train_model(training_generator, gru_model, criterion, optimizer, scheduler, num_epochs, dev='cpu', loss_type=1):
+def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, dev='cpu', loss_type=1):
     # move the model to device
     gru_model = gru_model.to(dev)
     loss_values = []
@@ -86,7 +86,6 @@ def train_model(training_generator, gru_model, criterion, optimizer, scheduler, 
             epoch_loss += loss.item()
         loss_values.append(epoch_loss)
         print("Loss at epoch %d: %.7f" % (epoch + 1, epoch_loss))
-        # scheduler.step()
 
     return gru_model, loss_values
 
@@ -152,17 +151,20 @@ if __name__ == '__main__':
     output_size = len(languages)
     seq_len = len(padded_sequences_train[0])
     dev = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
-    gru_model, char_min_model, criterion, optimizer, scheduler = initialize_network(
+    gru_model, char_min_model, criterion, optimizer = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
         output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE,
-        args.loss_function_type, args.num_epochs, dev)
+        args.loss_function_type, dev)
 
     print("Training the model...")
     gru_model, loss_values = train_model(
-        training_generator, gru_model, criterion, optimizer, scheduler, args.num_epochs, dev, args.loss_function_type)
+        training_generator, gru_model, criterion, optimizer, args.num_epochs, dev, args.loss_function_type)
 
     print("Plotting loss values...")
     plot_loss(loss_values, args.loss_function_type)
+
+    print("Evaluating on validation data...")
+    test_model(gru_model, vocab_mapping, X_test, Y_test, dev)
 
     print("Saving model to disk...")
     joblib.dump(gru_model, "{}_{}.pkl".format(

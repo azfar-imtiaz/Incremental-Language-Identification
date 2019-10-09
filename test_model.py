@@ -7,10 +7,16 @@ import config
 from load_data import load_data, get_numeric_representations_sents, get_clipped_sentences
 
 
-def test_model(model, vocab_mapping, X_test, Y_test, dev):
+def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, dev):
     total_predictions = 0
     correct_predictions = 0
     num_chars_until_hit_score_list = []
+
+    accuracy_per_lang = {}
+    for lang_label in lang_int_to_label_mapping.values():
+        accuracy_per_lang[lang_label] = {}
+        accuracy_per_lang[lang_label]['total_predictions'] = 0
+        accuracy_per_lang[lang_label]['correct_predictions'] = 0
 
     for test_sent, test_label in zip(X_test, Y_test):
         print("Testing instance: %s" % test_sent)
@@ -28,6 +34,8 @@ def test_model(model, vocab_mapping, X_test, Y_test, dev):
 
         for padded_seq in padded_sequences:
             total_predictions += 1
+            accuracy_per_lang[lang_int_to_label_mapping[test_label]
+                              ]['total_predictions'] += 1
             input = torch.stack([padded_seq]).long()
             input = input.to(dev)
             output = model(input)
@@ -41,6 +49,8 @@ def test_model(model, vocab_mapping, X_test, Y_test, dev):
                     num_chars_until_hit_score_list.append(
                         num_chars_until_hit_score)
                 correct_predictions += 1
+                accuracy_per_lang[lang_int_to_label_mapping[test_label]
+                                  ]['correct_predictions'] += 1
 
         print("Most probable class was correct for a total of %d character prefix lengths for this instance" %
               correct_predictions_per_instance)
@@ -63,6 +73,11 @@ def test_model(model, vocab_mapping, X_test, Y_test, dev):
         avg_chars_until_hit_score))
     print("Overall Accuracy of model: {}".format(overall_accuracy))
 
+    for lang_label in accuracy_per_lang.keys():
+        lang_accuracy = (accuracy_per_lang[lang_label]['correct_predictions'] /
+                         accuracy_per_lang[lang_label]['total_predictions']) * 100
+        print("Accuracy for language {} is: {}".format(lang_label, lang_accuracy))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -81,6 +96,8 @@ if __name__ == '__main__':
 
     print("Loading model...")
     lang_label_to_int_mapping = joblib.load(config.LANG_LABEL_MAPPING)
+    lang_int_to_label_mapping = {y: x for x,
+                                 y in lang_label_to_int_mapping.items()}
     vocab_mapping = joblib.load(config.VOCAB_MAPPING)
     gru_model = joblib.load(args.model_path)
     gru_model = gru_model.to(dev)
@@ -90,4 +107,4 @@ if __name__ == '__main__':
                      lang_label_to_int_mapping, clip_sents=True)
 
     print("Getting accuracy on testing data...")
-    test_model(gru_model, vocab_mapping, X, Y, dev)
+    test_model(gru_model, vocab_mapping, lang_int_to_label_mapping, X, Y, dev)
