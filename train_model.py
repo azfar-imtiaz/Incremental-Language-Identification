@@ -78,10 +78,12 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
                     loss += char_lengths
                 # take mean of the loss
                 loss = loss.mean()
-            if loss.item() <= 0.0:
+            if loss.item() <= 0.0001:
                 loss.item = 0.0001
-            loss.backward()
-            optimizer.step()
+
+            if not bool(torch.isnan(loss.item())):
+                loss.backward()
+                optimizer.step()
 
             epoch_loss += loss.item()
         loss_values.append(epoch_loss)
@@ -164,6 +166,7 @@ if __name__ == '__main__':
     plot_loss(loss_values, args.loss_function_type)
 
     print("Evaluating on validation data...")
+    gru_model.eval()
     lang_int_to_label_mapping = {y: x for x,
                                  y in lang_label_to_int_mapping.items()}
     test_model(gru_model, vocab_mapping,
