@@ -164,7 +164,10 @@ if __name__ == '__main__':
     plot_loss(loss_values, args.loss_function_type)
 
     print("Evaluating on validation data...")
-    test_model(gru_model, vocab_mapping, X_test, Y_test, dev)
+    lang_int_to_label_mapping = {y: x for x,
+                                 y in lang_label_to_int_mapping.items()}
+    test_model(gru_model, vocab_mapping,
+               lang_int_to_label_mapping, X_test, Y_test, dev)
 
     print("Saving model to disk...")
     joblib.dump(gru_model, "{}_{}.pkl".format(
