@@ -4,6 +4,7 @@ from torch.optim import Adam
 from torch.nn.utils.rnn import pad_sequence
 import joblib
 import argparse
+import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib
 # import random
@@ -81,7 +82,7 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
             if loss.item() <= 0.0001:
                 loss.item = 0.0001
 
-            if not bool(torch.isnan(loss.item())):
+            if loss.item() != np.nan:
                 loss.backward()
                 optimizer.step()
 
