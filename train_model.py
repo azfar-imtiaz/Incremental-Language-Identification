@@ -83,9 +83,9 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
             # if loss.item() <= 0.0001:
             #     loss.item = 0.0001
 
-            # if loss.item() != np.nan:
-            #     loss.backward()
-            #     optimizer.step()
+            if loss.item() != np.nan:
+                loss.backward()
+                optimizer.step()
 
             epoch_loss += loss.item()
         loss_values.append(epoch_loss)
