@@ -6,7 +6,7 @@ import torch
 class GRUNet(nn.Module):
     def __init__(self, vocab_size, seq_len, input_size, hidden_size, num_layers, output_size, dev, dropout=0.0):
         super().__init__()
-        self.num_layers = 2
+        self.num_layers = 1
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.dev = dev
