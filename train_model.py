@@ -133,8 +133,6 @@ if __name__ == '__main__':
     print("Generating character-level vocabulary...")
     vocab_mapping, vocabulary = generate_vocabulary(X)
 
-    X_train, Y_train = X_train[:20], Y_train[:20]
-
     print("Getting clipped sentences...")
     X_train, Y_train = get_clipped_sentences(X_train, Y_train)
 
