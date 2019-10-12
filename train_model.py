@@ -38,7 +38,7 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
     return gru_model, criterion, optimizer
 
 
-def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, dev='cpu', loss_type=1):
+def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, hidden_layer_size, dev='cpu', loss_type=1):
     # move the model to device
     gru_model.train()
     gru_model = gru_model.to(dev)
@@ -53,14 +53,17 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
         padded_sequences, y = zip(*zipped_data)
         '''
         epoch_loss = 0.0
+        hidden_layer = gru_model.init_hidden(hidden_layer_size)
         for i, (local_batch, local_labels) in enumerate(training_generator):
             # move local_batch and local_labels to device
             local_batch = local_batch.to(dev)
             local_labels = local_labels.to(dev)
             # for index, (input_seq, output_seq) in enumerate(zip(padded_sequences, y)):  --> This is for batch size 1
             optimizer.zero_grad()
+            # get data of hidden layer
+            hidden_layer = hidden_layer.data
             # output = model(torch.stack([input_seq]).long())  --> This is for batch size 1
-            output = gru_model(local_batch.long())
+            output, hidden_layer = gru_model(local_batch.long(), hidden_layer)
             # loss = criterion(output, torch.LongTensor([output_seq]))  --> This is for batch size 1
             loss = criterion(output, local_labels.long())
             if loss_type != 1:
@@ -130,6 +133,8 @@ if __name__ == '__main__':
     print("Generating character-level vocabulary...")
     vocab_mapping, vocabulary = generate_vocabulary(X)
 
+    X_train, Y_train = X_train[:20], Y_train[:20]
+
     print("Getting clipped sentences...")
     X_train, Y_train = get_clipped_sentences(X_train, Y_train)
 
@@ -162,7 +167,8 @@ if __name__ == '__main__':
 
     print("Training the model...")
     gru_model, loss_values = train_model(
-        training_generator, gru_model, criterion, optimizer, args.num_epochs, dev, args.loss_function_type)
+        training_generator, gru_model, criterion, optimizer, args.num_epochs,
+        padded_sequences_train.size(1), dev, args.loss_function_type)
 
     print("Plotting loss values...")
     plot_loss(loss_values, args.loss_function_type)
