@@ -10,7 +10,7 @@ import matplotlib
 # import random
 
 import config
-from GRUNet import GRUNet, CharMinimizationNet
+from GRUNet import GRUNet
 from load_data import load_data, get_numeric_representations_sents, initialize_data_generator, generate_vocabulary, get_clipped_sentences
 from test_model import test_model
 
@@ -26,7 +26,7 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
 
     print(gru_model)
 
-    char_min_model = CharMinimizationNet()
+    # char_min_model = CharMinimizationNet()
     # reduction='none' means that you don't average out the loss of a batch, but rather get the loss
     # as a list of loss values - the loss of each individual loss in the batch. Need this for the custom losses
     if loss_function_type == 1:
@@ -35,11 +35,12 @@ def initialize_network(vocab_size, seq_len, input_size, hidden_size, output_size
         criterion = nn.CrossEntropyLoss(reduction='none')
     optimizer = Adam(gru_model.parameters(), lr=learning_rate)
     # scheduler = StepLR(optimizer, step_size=int(num_epochs / 3), gamma=0.1)
-    return gru_model, char_min_model, criterion, optimizer
+    return gru_model, criterion, optimizer
 
 
 def train_model(training_generator, gru_model, criterion, optimizer, num_epochs, dev='cpu', loss_type=1):
     # move the model to device
+    gru_model.train()
     gru_model = gru_model.to(dev)
     loss_values = []
     # training the model
@@ -79,12 +80,12 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
                     loss += char_lengths
                 # take mean of the loss
                 loss = loss.mean()
-            if loss.item() <= 0.0001:
-                loss.item = 0.0001
+            # if loss.item() <= 0.0001:
+            #     loss.item = 0.0001
 
-            if loss.item() != np.nan:
-                loss.backward()
-                optimizer.step()
+            # if loss.item() != np.nan:
+            #     loss.backward()
+            #     optimizer.step()
 
             epoch_loss += loss.item()
         loss_values.append(epoch_loss)
@@ -154,7 +155,7 @@ if __name__ == '__main__':
     output_size = len(languages)
     seq_len = len(padded_sequences_train[0])
     dev = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
-    gru_model, char_min_model, criterion, optimizer = initialize_network(
+    gru_model, criterion, optimizer = initialize_network(
         vocab_size, seq_len, config.INPUT_SIZE, config.HIDDEN_SIZE,
         output_size, config.GRU_NUM_LAYERS, config.DROPOUT, config.LEARNING_RATE,
         args.loss_function_type, dev)
@@ -167,7 +168,6 @@ if __name__ == '__main__':
     plot_loss(loss_values, args.loss_function_type)
 
     print("Evaluating on validation data...")
-    gru_model.eval()
     lang_int_to_label_mapping = {y: x for x,
                                  y in lang_label_to_int_mapping.items()}
     test_model(gru_model, vocab_mapping,
