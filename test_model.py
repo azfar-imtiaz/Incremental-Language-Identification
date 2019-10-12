@@ -8,6 +8,7 @@ from load_data import load_data, get_numeric_representations_sents, get_clipped_
 
 
 def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, dev):
+    model.eval()
     total_predictions = 0
     correct_predictions = 0
     num_chars_until_hit_score_list = []
