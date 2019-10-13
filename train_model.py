@@ -88,6 +88,9 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
 
             if loss.item() != np.nan:
                 loss.backward()
+                # clip the gradients to avoid exploding gradients
+                nn.utils.clip_grad_norm_(
+                    gru_model.parameters(), 1.0)
                 optimizer.step()
 
             epoch_loss += loss.item()
