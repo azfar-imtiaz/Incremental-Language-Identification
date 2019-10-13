@@ -181,10 +181,10 @@ if __name__ == '__main__':
                lang_int_to_label_mapping, X_test, Y_test, dev)
 
     print("Saving model to disk...")
-    #joblib.dump(gru_model, "{}_{}.pkl".format(
-    #    config.GRU_MODEL_PATH, args.loss_function_type))
-    #joblib.dump(vocab_mapping, config.VOCAB_MAPPING)
-    #joblib.dump(lang_label_to_int_mapping, config.LANG_LABEL_MAPPING)
+    joblib.dump(gru_model, "{}_{}.pkl".format(
+        config.GRU_MODEL_PATH, args.loss_function_type))
+    joblib.dump(vocab_mapping, config.VOCAB_MAPPING)
+    joblib.dump(lang_label_to_int_mapping, config.LANG_LABEL_MAPPING)
 
     # print("Testing the model...")
     # test_model(gru_model, vocab_mapping, X_test, Y_test)
