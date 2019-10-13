@@ -39,7 +39,7 @@ def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, 
                               ]['total_predictions'] += 1
             input = torch.stack([padded_seq]).long()
             input = input.to(dev)
-            hidden_layer = gru_model.init_hidden(padded_seq.size(1))
+            hidden_layer = model.init_hidden(padded_seq.size(1))
             output = model(input, hidden_layer)
             _, prediction = torch.max(output.data, dim=1)
             if prediction == test_label:
