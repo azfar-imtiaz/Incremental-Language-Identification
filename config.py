@@ -1,9 +1,9 @@
 x_file = 'x_train_subset_langs.txt'
 y_file = 'y_train_subset_langs.txt'
-LANGUAGES = ['urd', 'ara', 'fas', 'swe', 'fin', 'arz', 'dan', 'deu', 'eng', 'hin']
+LANGUAGES = ['urd', 'ara', 'fas', 'swe',
+             'fin', 'arz', 'dan', 'deu', 'eng', 'hin']
 
 # number of epochs for training
-NUM_EPOCHS = 5
 BATCH_SIZE = 500
 INPUT_SIZE = 350
 HIDDEN_SIZE = 500
