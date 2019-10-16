@@ -49,7 +49,7 @@ The main script to train the model is `train_model.py`. It accepts the following
 `python3 train_model -X x_train_subset_langs.txt -Y y_train_subset_langs.txt -E 250 -L 1`
 
 ### Specifying batch size
-To specify the batch size, you can specify the value in the `BATCH_SIZE` parameter in the `config.py` file. If you don't want to use batches, please set the batch size here to 1. 
+To specify the batch size, you can specify the value in the `BATCH_SIZE` parameter in the `config.py` file. If you don't want to use batches, please set the batch size here to 1. It is suggested to use batching, however, as I have found it to improve the model performance. It also helps bring down the loss faster, as the model is not being updated by every individual instance, but rather every batch of instances.
 
 ### Training process
 
