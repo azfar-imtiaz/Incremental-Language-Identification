@@ -227,17 +227,17 @@ Overall Accuracy of model: 66.3366
 ### Training loss plots
 Here are some training loss plots:
 
-![](loss_values_plot_1.png)
-
 **Training Loss with LF 1, no StepLR**
 
-![](loss_values_plot_2.png)
+![](loss_values_plot_1.png)
 
 **Training Loss with LF 2, no StepLR**
 
-![](loss_values_plot_3.png)
+![](loss_values_plot_2.png)
 
 **Training Loss with LF 3, no StepLR**
+
+![](loss_values_plot_3.png)
 
 ## Evaluating the model
 In order to run the testing script, we need to have 3 objects saved to disk so that the `test_model.py` script can load them and evaluate the model on the test data: the trained model, the vocab-to-int mapping, and the mapping of language names to language labels. The `test_model.py` script is provided with the following command-line arguments:
