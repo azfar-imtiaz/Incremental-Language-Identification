@@ -39,7 +39,11 @@ def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, 
                               ]['total_predictions'] += 1
             input = torch.stack([padded_seq]).long()
             input = input.to(dev)
-            hidden_layer = model.init_hidden(len(padded_seq))
+            # hidden_layer = model.init_hidden(len(padded_seq))
+
+            # Size of hidden layer is 1 here because we are giving batch size here
+            # which is always 1 in case of testing single instance
+            hidden_layer = model.init_hidden(1)
             output, _ = model(input, hidden_layer)
             _, prediction = torch.max(output.data, dim=1)
             if prediction == test_label:
@@ -67,8 +71,11 @@ def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, 
         #     total_predictions += local_labels.size(0)
         #     correct_predictions += (predicted == local_labels).sum().item()
 
-    avg_chars_until_hit_score = sum(
-        num_chars_until_hit_score_list) / len(num_chars_until_hit_score_list)
+    if len(num_chars_until_hit_score_list) > 0:
+        avg_chars_until_hit_score = sum(
+            num_chars_until_hit_score_list) / len(num_chars_until_hit_score_list)
+    else:
+        avg_chars_until_hit_score = 100
     overall_accuracy = (correct_predictions / total_predictions) * 100
 
     print("Average number of characters until hit score: {}".format(
@@ -76,9 +83,11 @@ def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, 
     print("Overall Accuracy of model: {}".format(overall_accuracy))
 
     for lang_label in accuracy_per_lang.keys():
-        lang_accuracy = (accuracy_per_lang[lang_label]['correct_predictions'] /
-                         accuracy_per_lang[lang_label]['total_predictions']) * 100
-        print("Accuracy for language {} is: {}".format(lang_label, lang_accuracy))
+        if accuracy_per_lang[lang_label]['total_predictions'] > 0:
+            lang_accuracy = (accuracy_per_lang[lang_label]['correct_predictions'] /
+                             accuracy_per_lang[lang_label]['total_predictions']) * 100
+            print("Accuracy for language {} is: {}".format(
+                lang_label, lang_accuracy))
 
 
 if __name__ == '__main__':

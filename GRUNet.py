@@ -13,7 +13,7 @@ class GRUNet(nn.Module):
         self.dev = dev
         self.emb = nn.Embedding(vocab_size, input_size)
         self.gru = nn.GRU(input_size, hidden_size,
-                          num_layers=self.num_layers, dropout=dropout)
+                          num_layers=self.num_layers, batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_size * seq_len, output_size)
         # self.softmax = nn.Softmax(dim=2)
 

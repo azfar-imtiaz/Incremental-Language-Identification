@@ -60,6 +60,7 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
             local_labels = local_labels.to(dev)
             # for index, (input_seq, output_seq) in enumerate(zip(padded_sequences, y)):  --> This is for batch size 1
             optimizer.zero_grad()
+
             # get data of hidden layer
             hidden_layer = hidden_layer.data
             # output = model(torch.stack([input_seq]).long())  --> This is for batch size 1
@@ -169,7 +170,8 @@ if __name__ == '__main__':
     print("Training the model...")
     gru_model, loss_values = train_model(
         training_generator, gru_model, criterion, optimizer, args.num_epochs,
-        padded_sequences_train.size(1), dev, args.loss_function_type)
+        config.BATCH_SIZE, dev, args.loss_function_type)
+    # padded_sequences_train.size(1), dev, args.loss_function_type)
 
     print("Plotting loss values...")
     plot_loss(loss_values, args.loss_function_type)
