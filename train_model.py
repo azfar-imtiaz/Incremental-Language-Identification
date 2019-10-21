@@ -72,7 +72,7 @@ def train_model(training_generator, gru_model, criterion, optimizer, num_epochs,
                 char_lengths = []
                 for t in local_batch:
                     non_zero_indices = torch.nonzero(t)
-                    char_lengths.append(non_zero_indices.size(0))
+                    char_lengths.append(non_zero_indices.size(0) / 100.0)
                 char_lengths = torch.Tensor(char_lengths)
                 char_lengths = char_lengths.to(dev)
 
