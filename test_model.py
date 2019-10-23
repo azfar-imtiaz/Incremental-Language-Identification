@@ -14,10 +14,13 @@ def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, 
     num_chars_until_hit_score_list = []
 
     accuracy_per_lang = {}
+    num_chars_until_hit_score_per_lang = {}
     for lang_label in lang_int_to_label_mapping.values():
         accuracy_per_lang[lang_label] = {}
         accuracy_per_lang[lang_label]['total_predictions'] = 0
         accuracy_per_lang[lang_label]['correct_predictions'] = 0
+
+        num_chars_until_hit_score_per_lang[lang_label] = []
 
     for test_sent, test_label in zip(X_test, Y_test):
         print("Testing instance: %s" % test_sent)
@@ -54,6 +57,10 @@ def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, 
                     # add this hit score to list of num_char_until_hit_score for averaging later
                     num_chars_until_hit_score_list.append(
                         num_chars_until_hit_score)
+                    # add this hit score to the specific language's list of hit scores
+                    num_chars_until_hit_score_per_lang[lang_int_to_label_mapping[test_label]].append(
+                        num_chars_until_hit_score)
+
                 correct_predictions += 1
                 accuracy_per_lang[lang_int_to_label_mapping[test_label]
                                   ]['correct_predictions'] += 1
@@ -88,6 +95,13 @@ def test_model(model, vocab_mapping, lang_int_to_label_mapping, X_test, Y_test, 
                              accuracy_per_lang[lang_label]['total_predictions']) * 100
             print("Accuracy for language {} is: {}".format(
                 lang_label, lang_accuracy))
+
+    for lang_label in num_chars_until_hit_score_per_lang.keys():
+        if len(num_chars_until_hit_score_per_lang[lang_label]) > 0:
+            avg_hit_score = sum(num_chars_until_hit_score_per_lang[lang_label]) / len(
+                num_chars_until_hit_score_per_lang[lang_label])
+            print("Average number of chars until hit score for {} is {}".format(
+                lang_label, avg_hit_score))
 
 
 if __name__ == '__main__':
