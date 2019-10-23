@@ -121,7 +121,7 @@ if __name__ == '__main__':
     parser.add_argument("-L", "--loss", dest="loss_function_type", type=int,
                         help="Specify the loss function to be used. 1=CrossEntropyLoss, 2=CrossEntropy with character length multiplied, 3=CrossEntropy with character length added.")
     parser.add_argument("-F", "--force-vocab-gen", dest="force_vocab_gen", type=int, default=0,
-                        help="Force the vocabulary and vocabulary to index mapping to be generated")
+                        help="Force the vocabulary and vocabulary to index mapping to be generated. 1=Generate new vocab_mapping and vocabulary, 0=Do not generate new vocab_mapping and vocabulary")
     args = parser.parse_args()
 
     languages = config.LANGUAGES
