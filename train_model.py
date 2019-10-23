@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from torch.optim import Adam
@@ -119,6 +120,8 @@ if __name__ == '__main__':
                         help="Specify the number of epochs for training the model")
     parser.add_argument("-L", "--loss", dest="loss_function_type", type=int,
                         help="Specify the loss function to be used. 1=CrossEntropyLoss, 2=CrossEntropy with character length multiplied, 3=CrossEntropy with character length added.")
+    parser.add_argument("-F", "--force-vocab-gen", dest="force_vocab_gen", type=int, default=0,
+                        help="Force the vocabulary and vocabulary to index mapping to be generated")
     args = parser.parse_args()
 
     languages = config.LANGUAGES
@@ -134,8 +137,21 @@ if __name__ == '__main__':
     X_train, X_test, Y_train, Y_test = train_test_split(
         X, Y, test_size=0.2, shuffle=True)
 
-    print("Generating character-level vocabulary...")
-    vocab_mapping, vocabulary = generate_vocabulary(X)
+    # if vocabulary mapping already exists on disk and force_vocab_gen is False, load vocab_mapping from disk
+    # additionally, initialize vocabulary using keys of vocab_mapping
+    if args.force_vocab_gen not in [0, 1]:
+        print("Please specify either 0 or 1 for -F command line parameter")
+        exit(1)
+    args.force_vocab_gen = bool(args.force_vocab_gen)
+
+    if os.path.exists(config.VOCAB_MAPPING) and args.force_vocab_gen is False:
+        print("Loading vocab_mapping from disk!")
+        vocab_mapping = joblib.load(config.VOCAB_MAPPING)
+        vocabulary = list(vocab_mapping.keys())
+    # else, create vocabulary and vocab_mapping from scratch
+    else:
+        print("Generating character-level vocabulary...")
+        vocab_mapping, vocabulary = generate_vocabulary(X)
 
     print("Getting clipped sentences...")
     X_train, Y_train = get_clipped_sentences(X_train, Y_train)
