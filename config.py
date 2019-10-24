@@ -4,9 +4,9 @@ LANGUAGES = ['urd', 'ara', 'fas', 'swe',
              'fin', 'arz', 'dan', 'deu', 'eng', 'hin']
 
 # number of epochs for training
-BATCH_SIZE = 500
-INPUT_SIZE = 350
-HIDDEN_SIZE = 500
+BATCH_SIZE = 1000
+INPUT_SIZE = 200
+HIDDEN_SIZE = 300
 GRU_NUM_LAYERS = 1
 DROPOUT = 0.0
 LEARNING_RATE = 0.0005
